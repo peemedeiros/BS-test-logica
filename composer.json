@@ -1,0 +1,19 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Models\\": "src/Models/",
+      "Services\\": "src/Services/",
+      "Repositories\\": "src/Repositories/",
+      "App\\": "src/",
+      "Interfaces\\": "src/Interfaces"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5"
+  }
+}

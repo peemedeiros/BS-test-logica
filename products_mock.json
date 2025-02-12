@@ -1,0 +1,9 @@
+{
+  "products": [
+    {"id": 1, "name": "Shit", "priceCents": 12000},
+    {"id": 2, "name": "Shorts", "priceCents": 8000},
+    {"id": 3, "name": "Shoes", "priceCents": 22000},
+    {"id": 4, "name": "Pants", "priceCents": 10000},
+    {"id": 5, "name": "Hat", "priceCents": 5000}
+  ]
+}
