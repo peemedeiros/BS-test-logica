@@ -11,6 +11,6 @@ class Pix implements IPaymentMethod
     {
         $subTotal -= $subTotal * self::DISCOUNT_PERCENTAGE;
 
-        return $subTotal;
+        return round($subTotal, mode: PHP_ROUND_HALF_DOWN);
     }
 }

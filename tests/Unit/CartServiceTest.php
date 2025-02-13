@@ -24,7 +24,6 @@ class CartServiceTest extends TestCase
 
     public function testCartReturnsCartFromRepository(): void
     {
-        // Arrange
         $expectedCart = new Cart([], 0, 0);
 
         $this->cartRepository
@@ -32,25 +31,20 @@ class CartServiceTest extends TestCase
             ->method('getCart')
             ->willReturn($expectedCart);
 
-        // Act
         $result = $this->cartService->cart();
 
-        // Assert
         $this->assertSame($expectedCart, $result);
         $this->assertInstanceOf(Cart::class, $result);
     }
 
     public function testAddProductToCartWithEmptyCart(): void
     {
-        // Arrange
         $cart = new Cart([], 0, 0);
 
         $product = new Product(1, 'Shirt', 10000);
 
-        // Act
         $updatedCart = $this->cartService->addProductToCart($cart, $product);
 
-        // Assert
         $this->assertCount(1, $updatedCart->products);
         $this->assertSame($product, $updatedCart->products[0]);
         $this->assertEquals(10000, $updatedCart->subTotalCents);
@@ -58,20 +52,15 @@ class CartServiceTest extends TestCase
 
     public function testAddProductToCartWithExistingProducts(): void
     {
-        // Arrange
         $cart = new Cart([], 0, 0);
 
         $product1 = new Product(1, 'Shirt', 10000);
-
         $product2 = new Product(2, 'Pants', 18000);
 
-        // Adiciona primeiro produto
         $cart = $this->cartService->addProductToCart($cart, $product1);
 
-        // Act
         $updatedCart = $this->cartService->addProductToCart($cart, $product2);
 
-        // Assert
         $this->assertCount(2, $updatedCart->products);
         $this->assertSame($product1, $updatedCart->products[0]);
         $this->assertSame($product2, $updatedCart->products[1]);
@@ -80,21 +69,18 @@ class CartServiceTest extends TestCase
 
     public function testAddProductToCartUpdatesSubtotalCorrectly(): void
     {
-        // Arrange
         $cart = new Cart([], 0, 0);
 
         $products = [
-            $this->createProduct(1, 'shirt', 15000), // R$ 15,00
+            $this->createProduct(1, 'shirt', 15000),
             $this->createProduct(2, 'pants', 18000),
             $this->createProduct(3, 'shoes', 20000)
         ];
 
-        // Act
         foreach ($products as $product) {
             $cart = $this->cartService->addProductToCart($cart, $product);
         }
 
-        // Assert
         $this->assertEquals(53000, $cart->subTotalCents);
         $this->assertCount(3, $cart->products);
     }
