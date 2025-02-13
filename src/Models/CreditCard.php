@@ -19,6 +19,9 @@ class CreditCard implements IPaymentMethod
             return $subTotal;
         }
 
-        return round($subTotal * (1 + self::TAX_PERCENTAGE) ** $this->installmentsAmount);
+        return round(
+            $subTotal * (1 + self::TAX_PERCENTAGE) ** $this->installmentsAmount,
+            mode: PHP_ROUND_HALF_DOWN
+        );
     }
 }

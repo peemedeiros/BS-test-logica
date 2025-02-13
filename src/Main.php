@@ -33,7 +33,6 @@ class Main
             }
         }
 
-
         $cart->totalCents = $paymentMethod->calculatesTotal($cart->subTotalCents);
 
         return $cart;

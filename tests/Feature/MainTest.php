@@ -25,49 +25,38 @@ class MainTest extends TestCase
     {
         parent::setUp();
 
-        // Inicializa os repositórios
         $this->cartRepository = $this->createMock(CartRepository::class);
         $this->productRepository = $this->createMock(ProductRepository::class);
 
-        // Inicializa os serviços com os repositórios
         $this->cartService = new CartService($this->cartRepository);
         $this->productService = new ProductService($this->productRepository);
 
-        // Inicializa a classe principal
         $this->main = new Main($this->productService, $this->cartService);
     }
 
     public function testRunWithSpecificProducts(): void
     {
-        // Arrange
         $cart = new Cart([], 0, 0);
 
-        $product1 = new Product(1, 'Shirt', 10000);
+        $products = [
+            new Product(1, 'Shirt', 10000),
+            new Product(2, 'Pants', 18000),
+        ];
 
-        $product2 = new Product(2, 'Pants', 18000);
-
-        // Configura o mock do CartRepository
         $this->cartRepository
             ->expects($this->once())
             ->method('getCart')
             ->willReturn($cart);
 
-        // Configura o mock do ProductRepository
         $this->productRepository
-            ->expects($this->exactly(2))
-            ->method('findById')
-            ->willReturnMap([
-                [1, $product1],
-                [2, $product2]
-            ]);
+            ->expects($this->once())
+            ->method('all')
+            ->willReturn($products);
 
         $paymentMethod = new Pix();
-        $productsIds = [1, 2];
 
-        // Act
-        $result = $this->main->run($productsIds, $paymentMethod);
+        $result = $this->main->run([], $paymentMethod);
 
-        // Assert
         $this->assertInstanceOf(Cart::class, $result);
         $this->assertCount(2, $result->products);
         $this->assertEquals(28000, $result->subTotalCents);
@@ -84,13 +73,11 @@ class MainTest extends TestCase
             new Product(3, 'Pants', 15000)
         ];
 
-        // Configura o mock do CartRepository
         $this->cartRepository
             ->expects($this->once())
             ->method('getCart')
             ->willReturn($cart);
 
-        // Configura o mock do ProductRepository
         $this->productRepository
             ->expects($this->once())
             ->method('all')
@@ -98,10 +85,8 @@ class MainTest extends TestCase
 
         $paymentMethod = new Pix();
 
-        // Act
         $result = $this->main->run([], $paymentMethod);
 
-        // Assert
         $this->assertInstanceOf(Cart::class, $result);
         $this->assertCount(3, $result->products);
         $this->assertEquals(45000, $result->subTotalCents);
@@ -112,53 +97,71 @@ class MainTest extends TestCase
     {
         $cart = new Cart([], 0, 0);
 
-        $product = new Product(1, 'Shirt', 20000);
+        $products = [
+            new Product(1, 'Shirt', 10000),
+            new Product(2, 'Shoes', 20000),
+            new Product(3, 'Pants', 15000)
+        ];
 
-        // Configura o mock do CartRepository
         $this->cartRepository
             ->expects($this->exactly(1))
             ->method('getCart')
             ->willReturn($cart);
 
-        // Configura o mock do ProductRepository
         $this->productRepository
-            ->expects($this->exactly(1))
-            ->method('findById')
-            ->willReturn($product);
+            ->expects($this->once())
+            ->method('all')
+            ->willReturn($products);
 
-        // Test Case 2: Cartão de Crédito à vista (10% de desconto)
         $creditCardOneInstallment = new CreditCard(1);
-        $resultCreditCard = $this->main->run([1], $creditCardOneInstallment);
+        $resultCreditCard = $this->main->run([], $creditCardOneInstallment);
 
-        // Assert Cartão à vista
-        $this->assertEquals(20000, $resultCreditCard->subTotalCents);
-        $this->assertEquals(18000, $resultCreditCard->totalCents);
+        $this->assertEquals(45000, $resultCreditCard->subTotalCents);
+        $this->assertEquals(40500, $resultCreditCard->totalCents);
     }
 
     public function testRunWithCreditCardPaymentMethod(): void
     {
-        $cart = new Cart([], 0, 0);
+        $cart1 = new Cart([], 0, 0);
+        $cart2 = new Cart([], 0, 0);
+        $cart3 = new Cart([], 0, 0);
 
-        $product = new Product(1, 'Shirt', 20000);
+        $products = [
+            new Product(1, 'Shirt', 12000),
+            new Product(2, 'Pants', 18000),
+            new Product(3, 'Shoes', 20000),
+            new Product(4, 'Hat', 5000),
+        ];
 
-        // Configura o mock do CartRepository
         $this->cartRepository
-            ->expects($this->exactly(1))
+            ->expects($this->exactly(3))
             ->method('getCart')
-            ->willReturn($cart);
+            ->willReturnOnConsecutiveCalls($cart1, $cart2, $cart3);
 
-        // Configura o mock do ProductRepository
         $this->productRepository
-            ->expects($this->exactly(1))
-            ->method('findById')
-            ->willReturn($product);
+            ->expects($this->exactly(3))
+            ->method('all')
+            ->willReturn($products);
 
-        // Test Case 2: Cartão de Crédito à vista (10% de desconto)
-        $creditCardOneInstallment = new CreditCard(3);
-        $resultCreditCard = $this->main->run([1], $creditCardOneInstallment);
+        // Parcelado em 2x
+        $creditCardTwoInstallment = new CreditCard(2);
+        $resultCreditCard = $this->main->run([], $creditCardTwoInstallment);
 
-        // Assert Cartão à vista
-        $this->assertEquals(20000, $resultCreditCard->subTotalCents);
-        $this->assertEquals(20606, $resultCreditCard->totalCents);
+        // Parcelado em 3x
+        $creditCardThreeInstallment = new CreditCard(3);
+        $resultCreditCard2 = $this->main->run([], $creditCardThreeInstallment);
+
+        // Parcelado em 6x
+        $creditCardSixInstallment = new CreditCard(6);
+        $resultCreditCard3 = $this->main->run([], $creditCardSixInstallment);
+
+        $this->assertEquals(55000, $resultCreditCard->subTotalCents);
+        $this->assertEquals(56105, $resultCreditCard->totalCents);
+
+        $this->assertEquals(55000, $resultCreditCard2->subTotalCents);
+        $this->assertEquals(56667, $resultCreditCard2->totalCents);
+
+        $this->assertEquals(55000, $resultCreditCard3->subTotalCents);
+        $this->assertEquals(58384, $resultCreditCard3->totalCents);
     }
 }
